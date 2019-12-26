@@ -1,5 +1,5 @@
 {
-    "name": "cviebrock/eloquent-sluggable",
+    "name": "sibche/eloquent-sluggable",
     "description": "Easy creation of slugs for your Eloquent models in Laravel 5.",
     "keywords": [
         "eloquent-sluggable",
@@ -9,7 +9,7 @@
         "lumen",
         "slug"
     ],
-    "homepage": "https://github.com/cviebrock/eloquent-sluggable",
+    "homepage": "https://github.com/sibche/eloquent-sluggable",
     "license": "MIT",
     "authors": [
         {
@@ -18,7 +18,7 @@
         }
     ],
     "require": {
-        "php": "^7.1",
+        "php": "^7.4",
         "cocur/slugify": "^3.1",
         "illuminate/config": "~5.8.0",
         "illuminate/database": "~5.8.0",
