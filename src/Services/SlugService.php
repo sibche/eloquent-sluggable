@@ -129,14 +129,14 @@ class SlugService
             return $this->model->__toString();
         }
 
-        $sourceStrings = array_map(function($key) {
+        $sourceStrings = array_map(function ($key) {
             $value = data_get($this->model, $key);
             if (is_bool($value)) {
-                $value = (int) $value;
+                $value = (int)$value;
             }
 
             return $value;
-        }, (array) $from);
+        }, (array)$from);
 
         return implode(' ', $sourceStrings);
     }
@@ -251,6 +251,45 @@ class SlugService
         throw new \UnexpectedValueException('Sluggable "reserved" for ' . get_class($this->model) . ':' . $attribute . ' is not null, an array, or a closure that returns null/array.');
     }
 
+    private function escapeUnicode($input)
+    {
+        return $this->persianToEnglish($this->arabicToPersian($input));
+    }
+
+    private function persianToEnglish($input, $colon = ',')
+    {
+        $num_a = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.');
+        $key_a = array('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹', $colon);
+        return str_replace($key_a, $num_a, $input);
+    }
+
+    private function arabicToPersian($input)
+    {
+        $characters = [
+            'ك' => 'ک',
+            'دِ' => 'د',
+            'بِ' => 'ب',
+            'زِ' => 'ز',
+            'ذِ' => 'ذ',
+            'شِ' => 'ش',
+            'سِ' => 'س',
+            'ى' => 'ی',
+            'ي' => 'ی',
+            '١' => '۱',
+            '٢' => '۲',
+            '٣' => '۳',
+            '٤' => '۴',
+            '٥' => '۵',
+            '٦' => '۶',
+            '٧' => '۷',
+            '٨' => '۸',
+            '٩' => '۹',
+            '٠' => '۰',
+        ];
+
+        return str_replace(array_keys($characters), array_values($characters), $input);
+    }
+
     /**
      * Checks if the slug should be unique, and makes it so if needed.
      *
@@ -272,13 +311,21 @@ class SlugService
         // find all models where the slug is like the current one
         $list = $this->getExistingSlugs($slug, $attribute, $config);
 
+        //escape list
+        $newList = collect();
+        foreach ($list as $item) {
+            $newList->add($this->escapeUnicode($item));
+        }
+        $list = $newList;
+
+        $escapedSlug=$this->escapeUnicode($slug);
         // if ...
         // 	a) the list is empty, or
         // 	b) our slug isn't in the list
         // ... we are okay
         if (
             $list->count() === 0 ||
-            $list->contains($slug) === false
+            $list->contains($escapedSlug) === false
         ) {
             return $slug;
         }
@@ -291,12 +338,13 @@ class SlugService
             $currentSlug = $list->get($this->model->getKey());
 
             if (
-                $currentSlug === $slug ||
-                strpos($currentSlug, $slug) === 0
+                $currentSlug === $escapedSlug ||
+                strpos($currentSlug, $escapedSlug) === 0
             ) {
                 return $currentSlug;
             }
         }
+
 
         $method = $config['uniqueSuffix'];
         if ($method === null) {
@@ -331,8 +379,8 @@ class SlugService
             return end($suffix);
         }
 
-        $list->transform(function($value, $key) use ($len) {
-            return (int) substr($value, $len);
+        $list->transform(function ($value, $key) use ($len) {
+            return (int)substr($value, $len);
         });
 
         // find the highest value and return one greater.
